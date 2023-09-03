@@ -1,4 +1,5 @@
 #include "db.h"
+#include "sql_connection_pool.h"
 #include <muduo/base/Logging.h>
 #include <iostream>
 // 数据库配置信息
@@ -7,38 +8,17 @@ static string user = "root";
 static string password = "123456";
 static string dbname = "chat";
 
-// 初始化数据库连接资源
+// 从数据库连接池中获得数据库连接
 MySQL::MySQL()
 {
-    _conn = mysql_init(nullptr);
+    connPool = connection_pool::GetInstance();
+    _conn = connPool->GetConnection();
 }
 
-// 释放数据库连接资源
+// 将数据库连接放回连接池
 MySQL::~MySQL()
 {
-    if (_conn != nullptr)
-    {
-        mysql_close(_conn);
-    }
-}
-
-// 连接数据库
-bool MySQL::connect()
-{
-    MYSQL *p = mysql_real_connect(_conn, server.c_str(), user.c_str(),
-                                  password.c_str(), dbname.c_str(), 3306, nullptr, 0);
-    if (p != nullptr)
-    {
-        // C和C++代码默认的编码字符是ASCII，如果不设置，从MySQL上拉下来的中文显示乱码
-        //插入的话也可能会出错
-        mysql_query(_conn, "set names utf8");
-        LOG_INFO << "connect mysql success!";
-    }
-    else
-    {
-        LOG_INFO << "connect mysql fail!";
-    }
-    return p;
+    connPool->ReleaseConnection(_conn);
 }
 
 // 更新操作

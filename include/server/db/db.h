@@ -3,18 +3,19 @@
 
 #include <mysql/mysql.h>
 #include <string>
+
+#include "sql_connection_pool.h"
+
 using namespace std;
 
-// 数据库操作类
+// 数据库操作类(RAII)
 class MySQL
 {
 public:
-    // 初始化数据库连接资源
+    // 从数据库连接池中取连接
     MySQL();
-    // 释放数据库连接资源
+    // 归还数据库连接到连接池中
     ~MySQL();
-    // 连接数据库
-    bool connect();
     // 更新操作
     bool update(string sql);
     // 查询操作
@@ -23,5 +24,6 @@ public:
     MYSQL* getConnection();
 private:
     MYSQL* _conn;
+    connection_pool* connPool;
 };
 #endif

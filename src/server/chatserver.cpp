@@ -22,6 +22,10 @@ ChatServer ::ChatServer(EventLoop *loop,
 
     // 设置线程数量
     _server.setThreadNum(4);
+
+    // 初始化数据库连接池
+    m_connPool = connection_pool::GetInstance();
+    m_connPool->init();
 }
 
 // 启动服务

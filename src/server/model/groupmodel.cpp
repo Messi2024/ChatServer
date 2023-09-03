@@ -10,13 +10,10 @@ bool GroupModel::createGroup(Group &group)
             group.getName().c_str(), group.getDesc().c_str());
 
     MySQL mysql;
-    if (mysql.connect())
+    if (mysql.update(sql))
     {
-        if (mysql.update(sql))
-        {
-            group.setId(mysql_insert_id(mysql.getConnection()));
-            return true;
-        }
+        group.setId(mysql_insert_id(mysql.getConnection()));
+        return true;
     }
 
     return false;
@@ -31,10 +28,7 @@ void GroupModel::addGroup(int userid, int groupid, string role)
             groupid, userid, role.c_str());
 
     MySQL mysql;
-    if (mysql.connect())
-    {
-        mysql.update(sql);
-    }
+    mysql.update(sql);
 }
 
 // 查询用户所在群组信息，以及群中用户的详细信息
@@ -52,23 +46,20 @@ vector<Group> GroupModel::queryGroups(int userid)
     vector<Group> groupVec;
 
     MySQL mysql;
-    if (mysql.connect())
+    MYSQL_RES *res = mysql.query(sql);
+    if (res != nullptr)
     {
-        MYSQL_RES *res = mysql.query(sql);
-        if (res != nullptr)
+        MYSQL_ROW row;
+        // 查出userid所有的群组信息
+        while ((row = mysql_fetch_row(res)) != nullptr)
         {
-            MYSQL_ROW row;
-            // 查出userid所有的群组信息
-            while ((row = mysql_fetch_row(res)) != nullptr)
-            {
-                Group group;
-                group.setId(atoi(row[0]));
-                group.setName(row[1]);
-                group.setDesc(row[2]);
-                groupVec.push_back(group);
-            }
-            mysql_free_result(res);
+            Group group;
+            group.setId(atoi(row[0]));
+            group.setName(row[1]);
+            group.setDesc(row[2]);
+            groupVec.push_back(group);
         }
+        mysql_free_result(res);
     }
 
     // 遍历查到的用户所在的群组，再查询每个群组里有哪些用户
@@ -106,18 +97,15 @@ vector<int> GroupModel::queryGroupUsers(int userid, int groupid)
 
     vector<int> idVec;
     MySQL mysql;
-    if(mysql.connect())
+    MYSQL_RES *res = mysql.query(sql);
+    if (res != nullptr)
     {
-        MYSQL_RES * res = mysql.query(sql);
-        if(res != nullptr)
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(res)) != nullptr)
         {
-            MYSQL_ROW row;
-            while((row = mysql_fetch_row(res)) != nullptr)
-            {
-                idVec.push_back(atoi(row[0]));
-            }
-            mysql_free_result(res);
+            idVec.push_back(atoi(row[0]));
         }
+        mysql_free_result(res);
     }
     return idVec;
 }
